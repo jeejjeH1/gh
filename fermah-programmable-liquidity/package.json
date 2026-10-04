@@ -1,0 +1,13 @@
+{
+  "name": "fermah-programmable-liquidity",
+  "version": "1.0.0",
+  "description": "X post image: Fermah Kernel, programmable liquidity",
+  "scripts": {
+    "render": "node render.mjs 2"
+  },
+  "dependencies": {
+    "@fontsource/jetbrains-mono": "^5.3.0",
+    "@fontsource/manrope": "^5.3.0"
+  },
+  "private": true
+}

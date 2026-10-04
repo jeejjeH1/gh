@@ -1,0 +1,230 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>Fermah — Liquidity that acts</title>
+<style>
+  @font-face { font-family: "Manrope"; font-weight: 500; src: url(fonts/manrope-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Manrope"; font-weight: 600; src: url(fonts/manrope-latin-600-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Manrope"; font-weight: 700; src: url(fonts/manrope-latin-700-normal.woff2) format("woff2"); }
+  @font-face { font-family: "Manrope"; font-weight: 800; src: url(fonts/manrope-latin-800-normal.woff2) format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 500; src: url(fonts/jetbrains-mono-latin-500-normal.woff2) format("woff2"); }
+  @font-face { font-family: "JetBrains Mono"; font-weight: 600; src: url(fonts/jetbrains-mono-latin-600-normal.woff2) format("woff2"); }
+
+  /* Palette sampled from fermah.xyz */
+  :root {
+    --bg: #041624; --bg-2: #051422; --card: #081d2c; --glow: 14, 80, 88;
+    --teal: #1ce3cc; --teal-rgb: 28, 227, 204; --green: #02c29c;
+    --ink: #ebf5ff; --body: #8ba2b6; --body-rgb: 139, 162, 182; --line: #247679;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1600px; height: 900px; overflow: hidden; }
+  body {
+    position: relative; font-family: "Manrope", sans-serif; color: var(--ink); -webkit-font-smoothing: antialiased;
+    background:
+      radial-gradient(760px 520px at 74% 34%, rgba(var(--glow), .42), transparent 62%),
+      radial-gradient(620px 440px at -4% -6%, rgba(var(--glow), .38), transparent 60%),
+      radial-gradient(900px 380px at 50% 112%, rgba(var(--glow), .30), transparent 64%),
+      linear-gradient(180deg, var(--bg), var(--bg-2));
+  }
+  .grid { position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(var(--teal-rgb), .045) 1px, transparent 1px), linear-gradient(90deg, rgba(var(--teal-rgb), .045) 1px, transparent 1px);
+    background-size: 64px 64px; background-position: 32px 14px;
+    -webkit-mask-image: radial-gradient(1100px 700px at 50% 45%, #000 30%, transparent 85%); }
+  .abs { position: absolute; }
+  .mono { font-family: "JetBrains Mono", monospace; font-weight: 500; text-transform: uppercase; letter-spacing: .22em; }
+  .teal { color: var(--teal); }
+
+  /* ---------- left column ---------- */
+  .logo { left: 96px; top: 80px; height: 42px; }
+  .eyebrow { left: 98px; top: 196px; font-size: 18px; line-height: 1.75; color: var(--teal); }
+  h1 { position: absolute; left: 92px; top: 262px; font-size: 118px; font-weight: 700; letter-spacing: -.045em; line-height: 1.0; }
+  h1 .dot { color: var(--teal); }
+  .lede { left: 98px; top: 512px; width: 640px; font-size: 27px; font-weight: 500; line-height: 1.45; color: var(--body); letter-spacing: -.005em; }
+  .lede b { color: var(--ink); font-weight: 600; }
+
+  /* ---------- card ---------- */
+  .card { position: absolute; left: 818px; top: 78px; width: 686px; height: 476px; border-radius: 30px; overflow: hidden;
+    background: linear-gradient(180deg, rgba(8, 29, 44, .92), rgba(5, 22, 35, .94));
+    box-shadow: inset 0 0 0 1.5px rgba(36, 118, 121, .75), 0 40px 90px rgba(0, 0, 0, .45); }
+  .card::before { content: ""; position: absolute; left: -160px; top: -200px; width: 560px; height: 460px;
+    background: radial-gradient(closest-side, rgba(var(--glow), .95), transparent); }
+  .cardhead { position: absolute; left: 36px; right: 36px; top: 30px; display: flex; justify-content: space-between; align-items: center; }
+  .cardhead .mono { font-size: 15px; }
+  .pill { font-family: "JetBrains Mono", monospace; font-size: 13px; letter-spacing: .18em; text-transform: uppercase; color: var(--ink);
+    padding: 9px 16px 9px 14px; border-radius: 999px; border: 1.5px solid rgba(var(--teal-rgb), .5); display: flex; gap: 10px; align-items: center;
+    background: linear-gradient(90deg, rgba(9, 44, 59, .9), rgba(57, 87, 97, .55)); }
+  .pill i { width: 8px; height: 8px; border-radius: 50%; background: var(--teal); box-shadow: 0 0 10px var(--teal); }
+  #chart { position: absolute; left: 39px; top: 88px; overflow: visible; }
+  .legend { position: absolute; left: 36px; right: 36px; bottom: 26px; display: flex; gap: 30px; font-size: 16px; font-weight: 500; color: var(--body); }
+  .legend span { display: flex; align-items: center; gap: 10px; white-space: nowrap; }
+  .sw { display: inline-block; }
+  .sw.price { width: 22px; height: 3px; border-radius: 2px; background: var(--ink); box-shadow: 0 0 8px rgba(var(--teal-rgb), .8); }
+  .sw.kernel { width: 22px; height: 14px; border-radius: 3px; background: rgba(var(--teal-rgb), .22); box-shadow: inset 0 1.5px 0 var(--teal), inset 0 -1.5px 0 var(--teal); }
+  .sw.passive { width: 22px; height: 14px; border-radius: 3px; border: 1.5px dashed rgba(var(--body-rgb), .55); }
+
+  /* ---------- loop ---------- */
+  .loophead { left: 96px; right: 96px; top: 612px; display: flex; justify-content: space-between; font-size: 15px; }
+  .loophead .grey { color: var(--body); }
+  .loophead .teal { display: flex; align-items: center; gap: 12px; }
+  .sq { width: 10px; height: 10px; background: var(--teal); box-shadow: 0 0 12px rgba(var(--teal-rgb), .9); }
+  #track { position: absolute; left: 0; top: 650px; overflow: visible; }
+  .step { position: absolute; top: 690px; width: 320px; }
+  .step .num { font-size: 15px; color: var(--teal); letter-spacing: .2em; }
+  .step h3 { margin-top: 10px; font-size: 44px; font-weight: 700; letter-spacing: -.035em; line-height: 1; }
+  .step p { margin-top: 12px; font-size: 22px; font-weight: 500; color: var(--body); }
+
+  .foot { left: 96px; right: 96px; top: 846px; display: flex; justify-content: space-between; font-size: 14px; padding-top: 0; }
+  .foot .grey { color: var(--body); }
+</style>
+</head>
+<body>
+  <div class="grid"></div>
+
+  <img class="abs logo" src="/assets/fermah-logo-light.png" alt="Fermah">
+  <div class="abs eyebrow mono">Fermah · Kernel<br>Programmable liquidity</div>
+  <h1>Liquidity<br>that acts<span class="dot">.</span></h1>
+  <p class="abs lede">Not just capital sitting in a pool.<br><b>Capital that can actually act.</b></p>
+
+  <div class="card">
+    <div class="cardhead"><span class="mono teal">LP position</span><span class="pill"><i></i>Signal-driven</span></div>
+    <svg id="chart" width="608" height="300" viewBox="0 0 608 300"></svg>
+    <div class="legend">
+      <span><i class="sw price"></i>Price</span>
+      <span><i class="sw kernel"></i>Kernel range · adaptive</span>
+      <span><i class="sw passive"></i>Passive range · static</span>
+    </div>
+  </div>
+
+  <div class="abs loophead mono"><span class="teal"><i class="sq"></i>The Kernel loop</span><span class="grey">No human · no centralized automation server</span></div>
+  <svg id="track" width="1600" height="40" viewBox="0 0 1600 40"></svg>
+  <div class="step" style="left:96px"><div class="num mono">01</div><h3>Observe</h3><p>a verifiable condition</p></div>
+  <div class="step" style="left:448px"><div class="num mono">02</div><h3>Execute</h3><p>a predefined strategy</p></div>
+  <div class="step" style="left:800px"><div class="num mono">03</div><h3>Adapt</h3><p>the LP position</p></div>
+  <div class="step" style="left:1152px"><div class="num mono">04</div><h3>Settle</h3><p>the result onchain</p></div>
+
+  <div class="abs foot mono"><span class="teal">Liquidity becomes programmable</span><span class="grey">fermah.xyz</span></div>
+
+<script>
+document.fonts.ready.then(() => {
+  const NS = 'http://www.w3.org/2000/svg';
+  const mk = (tag, attrs, parent) => {
+    const n = document.createElementNS(NS, tag);
+    for (const k in attrs) n.setAttribute(k, attrs[k]);
+    if (parent) parent.appendChild(n);
+    return n;
+  };
+  const smooth = (x) => x <= 0 ? 0 : x >= 1 ? 1 : x * x * (3 - 2 * x);
+
+  // ---------------- chart ----------------
+  const svg = document.getElementById('chart');
+  const CW = 608, CH = 300, TOP = 46;
+  const defs = mk('defs', {}, svg);
+  const g1 = mk('linearGradient', { id: 'kband', x1: 0, y1: 0, x2: 0, y2: 1 }, defs);
+  mk('stop', { offset: 0, 'stop-color': '#1ce3cc', 'stop-opacity': .26 }, g1);
+  mk('stop', { offset: 1, 'stop-color': '#1ce3cc', 'stop-opacity': .08 }, g1);
+  const glow = mk('filter', { id: 'glow', x: '-10%', y: '-30%', width: '120%', height: '160%' }, defs);
+  mk('feGaussianBlur', { stdDeviation: 5 }, glow);
+
+  // Events: price reacts first, the Kernel range re-centres right after.
+  const EV = [
+    { x: 100, label: 'Volatility spike' },
+    { x: 304, label: 'Cross-chain flows' },
+    { x: 498, label: 'Macro shift' },
+  ];
+  const SEG = [ // centre, half-width of the range in each regime
+    { c: 254, h: 22 }, { c: 180, h: 50 }, { c: 108, h: 32 }, { c: 186, h: 36 },
+  ];
+  const regime = (x, lead) => {
+    let c = SEG[0].c, h = SEG[0].h;
+    EV.forEach((e, i) => {
+      const k = smooth((x - (e.x + lead)) / 34);
+      c += (SEG[i + 1].c - SEG[i].c) * k; h += (SEG[i + 1].h - SEG[i].h) * k;
+    });
+    return { c, h };
+  };
+  const band = (x) => regime(x, 8);
+  const PASSIVE = { c: 254, h: 22 };
+
+  // grid
+  for (let y = TOP + 14; y < CH; y += 46) mk('line', { x1: 0, x2: CW, y1: y, y2: y, stroke: 'rgba(139,162,182,.09)', 'stroke-width': 1 }, svg);
+
+  // event markers + chips
+  EV.forEach((e) => {
+    mk('line', { x1: e.x, x2: e.x, y1: 40, y2: CH, stroke: 'rgba(28,227,204,.38)', 'stroke-width': 1.2, 'stroke-dasharray': '3 6' }, svg);
+  });
+
+  // passive range (static)
+  mk('rect', { x: 0, y: PASSIVE.c - PASSIVE.h, width: CW, height: PASSIVE.h * 2, fill: 'rgba(139,162,182,.06)', stroke: 'rgba(139,162,182,.42)', 'stroke-width': 1.4, 'stroke-dasharray': '6 6', rx: 4 }, svg);
+
+  // kernel range (adaptive)
+  const N = 152, top = [], bot = [];
+  for (let i = 0; i <= N; i++) {
+    const x = (i / N) * CW, b = band(x);
+    top.push([x, b.c - b.h]); bot.push([x, b.c + b.h]);
+  }
+  const pts = (a) => a.map(([x, y]) => `${x.toFixed(1)},${y.toFixed(1)}`).join(' ');
+  mk('polygon', { points: pts(top) + ' ' + pts(bot.slice().reverse()), fill: 'url(#kband)' }, svg);
+  mk('polyline', { points: pts(top), fill: 'none', stroke: '#1ce3cc', 'stroke-width': 1.6, 'stroke-opacity': .9 }, svg);
+  mk('polyline', { points: pts(bot), fill: 'none', stroke: '#1ce3cc', 'stroke-width': 1.6, 'stroke-opacity': .9 }, svg);
+
+  // price: leads each regime change, wanders inside the range
+  const phases = [0.3, 1.7, 2.9, 4.1, 5.3];
+  const price = [];
+  for (let i = 0; i <= 300; i++) {
+    const x = (i / 300) * CW, r = regime(x, -6);
+    const n = 0.5 * Math.sin(x * 0.061 + phases[0]) + 0.28 * Math.sin(x * 0.137 + phases[1]) + 0.16 * Math.sin(x * 0.29 + phases[2]) + 0.08 * Math.sin(x * 0.53 + phases[3]);
+    price.push([x, r.c + n * r.h * 0.78]);
+  }
+  const d = 'M' + price.map(([x, y]) => `${x.toFixed(1)} ${y.toFixed(1)}`).join(' L');
+  mk('path', { d, fill: 'none', stroke: '#1ce3cc', 'stroke-width': 6, 'stroke-opacity': .55, filter: 'url(#glow)' }, svg);
+  mk('path', { d, fill: 'none', stroke: '#ebf5ff', 'stroke-width': 2.6, 'stroke-linejoin': 'round', 'stroke-linecap': 'round' }, svg);
+  const [ex, ey] = price[price.length - 1];
+  mk('circle', { cx: ex, cy: ey, r: 13, fill: 'none', stroke: 'rgba(28,227,204,.45)', 'stroke-width': 1.5 }, svg);
+  mk('circle', { cx: ex, cy: ey, r: 5.5, fill: '#ebf5ff' }, svg);
+
+  // adaptation nodes: where the range finishes re-centring after each signal
+  EV.forEach((e) => {
+    const x = e.x + 44, b = band(x);
+    mk('circle', { cx: x, cy: b.c - b.h, r: 4.5, fill: '#041624', stroke: '#1ce3cc', 'stroke-width': 2 }, svg);
+  });
+
+  // chips on top
+  EV.forEach((e) => {
+    const t = mk('text', { x: e.x, y: 22, 'text-anchor': 'middle', 'font-family': 'JetBrains Mono', 'font-weight': 500, 'font-size': 13, 'letter-spacing': '1.6', fill: '#1ce3cc' }, null);
+    t.textContent = e.label.toUpperCase();
+    svg.appendChild(t);
+    const w = t.getComputedTextLength() + 26;
+    const r = mk('rect', { x: e.x - w / 2, y: 2, width: w, height: 30, rx: 15, fill: '#082433', stroke: 'rgba(28,227,204,.55)', 'stroke-width': 1.2 }, null);
+    svg.insertBefore(r, t);
+  });
+
+  // labels inside the plot
+  const label = (x, y, txt, fill, anchor = 'start') => {
+    const t = mk('text', { x, y, 'text-anchor': anchor, 'font-family': 'JetBrains Mono', 'font-weight': 500, 'font-size': 12, 'letter-spacing': '1.4', fill }, svg);
+    t.textContent = txt;
+  };
+  label(CW - 4, PASSIVE.c + PASSIVE.h + 20, 'PASSIVE · OUT OF RANGE', 'rgba(139,162,182,.85)', 'end');
+  const kb = band(470);
+  label(470, kb.c - kb.h - 14, 'KERNEL · IN RANGE', '#1ce3cc', 'end');
+
+  // ---------------- loop track ----------------
+  const tr = document.getElementById('track');
+  const tdefs = mk('defs', {}, tr);
+  const tg = mk('linearGradient', { id: 'trk', x1: 0, x2: 1, y1: 0, y2: 0 }, tdefs);
+  mk('stop', { offset: 0, 'stop-color': '#1ce3cc', 'stop-opacity': .85 }, tg);
+  mk('stop', { offset: 1, 'stop-color': '#1ce3cc', 'stop-opacity': .2 }, tg);
+  mk('line', { x1: 96, x2: 1504, y1: 20, y2: 20, stroke: 'url(#trk)', 'stroke-width': 1.5 }, tr);
+  [96, 448, 800, 1152].forEach((x, i) => {
+    mk('circle', { cx: x + 8, cy: 20, r: 16, fill: 'rgba(28,227,204,.12)' }, tr);
+    mk('circle', { cx: x + 8, cy: 20, r: 7, fill: '#1ce3cc' }, tr);
+    if (i < 3) { // chevron before the next node
+      const ax = x + 352 - 26;
+      mk('path', { d: `M${ax} 13 L${ax + 8} 20 L${ax} 27`, fill: 'none', stroke: '#1ce3cc', 'stroke-width': 2, 'stroke-linecap': 'round', 'stroke-linejoin': 'round', 'stroke-opacity': .8 }, tr);
+    }
+  });
+  document.body.dataset.ready = '1';
+});
+</script>
+</body>
+</html>
