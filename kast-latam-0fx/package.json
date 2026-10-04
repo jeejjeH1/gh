@@ -8,7 +8,10 @@
     "frames": "node scripts/render.mjs",
     "audio": "python3 scripts/audio.py",
     "encode": "bash scripts/encode.sh",
-    "build": "npm run frames && npm run audio && npm run encode"
+    "build": "npm run frames && npm run audio && npm run encode",
+    "frames:wide": "node scripts/render.mjs --format 16x9",
+    "encode:wide": "OUT=out/kast-latam-0fx-1920x1080.mp4 bash scripts/encode.sh",
+    "build:wide": "npm run frames:wide && npm run audio && npm run encode:wide"
   },
   "dependencies": {
     "@fontsource/geist-mono": "^5.3.0",

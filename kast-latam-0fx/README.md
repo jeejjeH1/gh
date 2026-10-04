@@ -1,11 +1,18 @@
 # KAST — 0% FX fees across LATAM (motion graphic)
 
-A 22-second, 1080×1080, 60 fps announcement video for the X/Twitter post
+A 22-second, 60 fps announcement video, in square (1080×1080) and 16:9 (1920×1080), for the X/Twitter post
 "0% FX fees are now live across LATAM". It is built as a deterministic HTML/Canvas
 timeline, rendered frame-by-frame in headless Chromium, and has its own
 synthesized soundtrack and sound design, cut to the picture.
 
-Output: `out/kast-latam-0fx-1080.mp4` (H.264 High, yuv420p BT.709, AAC 256k, loudness -14 LUFS).
+Outputs (H.264 High, yuv420p BT.709, AAC 256k, loudness -14 LUFS):
+
+- `out/kast-latam-0fx-1080.mp4`: square 1080×1080
+- `out/kast-latam-0fx-1920x1080.mp4`: 16:9 1920×1080
+
+Both come from the same timeline. The 16:9 layout (`.wide` rules in `src/index.html`, `LAY` in
+`src/main.js`) puts the map beside the headline, the card beside the purchase panel, and the full
+card on the end card.
 
 ## Storyboard (120 BPM grid)
 
@@ -38,14 +45,17 @@ never gets a gradient.
 npm install                 # fonts + map data
 pip install numpy scipy     # soundtrack synthesis
 npm run build               # frames -> soundtrack -> out/kast-latam-0fx-1080.mp4
+npm run build:wide          # same for 16:9 -> out/kast-latam-0fx-1920x1080.mp4
 ```
 
-For the motion-blurred master (4 sub-frames blended into each frame, about 8 GB of temporary PNGs), run
-`node scripts/render.mjs --sub 4 && npm run audio && SUB=4 npm run encode`.
+For the motion-blurred masters (4 sub-frames blended into each frame), run
+`node scripts/render.mjs --sub 4 --jpeg && npm run audio && SUB=4 EXT=jpg npm run encode`
+and add `--format 16x9` / `OUT=out/kast-latam-0fx-1920x1080.mp4` for the wide one.
+`--jpeg` writes q95 frames, about 5× smaller on disk than PNG.
 
 - `npm run preview` renders a few stills to `out/stills/`.
 - `node scripts/render.mjs --stills 3.2,7.1` renders specific timestamps.
-- To scrub live in a browser, run `npx serve .` and open `/src/index.html?play` (or `?t=7.1` for a single frame).
+- To scrub live in a browser, run `npx serve .` and open `/src/index.html?play` (or `?t=7.1` for a single frame; add `&format=16x9` for the wide layout).
 - `npm run map` regenerates the LATAM dot map (`src/latam-dots.js`).
 
 The whole timeline is in `src/main.js`. Each element is a pure function of `t`,

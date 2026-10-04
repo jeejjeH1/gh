@@ -1,6 +1,28 @@
 /* KAST — 0% FX fees across LATAM. Deterministic motion timeline: every frame is a pure function of t. */
 (() => {
-  const W = 1080, H = 1080, FPS = 60, DURATION = 22;
+  const params = new URLSearchParams(location.search);
+  const WIDE = params.get('format') === '16x9';
+  if (WIDE) document.documentElement.classList.add('wide');
+  const W = WIDE ? 1920 : 1080, H = 1080, FPS = 60, DURATION = 22;
+  document.querySelectorAll('canvas').forEach((c) => { c.width = W; c.height = H; });
+  // Format-specific positions. 16:9 puts the map beside the headline and the card beside the panel.
+  const LAY = WIDE ? {
+    map: { ms: 1.36, x: 1073, y: 81, dim: null },
+    exitOrigin: '1440px 540px',
+    card: { cx: 960, cy: 540, upX: -470, upY: 0, upS: 0.9 },
+    s4travel: 267, whip: 2100,
+    fx: { stamp: [1387, 526], year: [960, 590] },
+    glows: { s2: [1440, 540, 760], s3: [960, 540, 760], s4: [480, 540, 820], s6: [960, 610, 760], s7: [1480, 560, 700] },
+    s7card: { s: 1.15, fromX: 900 },
+  } : {
+    map: { ms: 1.24, x: 404, y: 132, dim: [770, 520, 870] },
+    exitOrigin: '760px 560px',
+    card: { cx: 540, cy: 451, upX: 0, upY: -134, upS: 0.74 },
+    s4travel: 205, whip: 1350,
+    fx: { stamp: [630, 690], year: [540, 570] },
+    glows: { s2: [790, 520, 640], s3: [540, 330, 560], s4: [300, 520, 700], s6: [540, 600, 620], s7: [930, 830, 560] },
+    s7card: { s: 1, fromX: 760 },
+  };
   const MINT = [163, 247, 207];
   const css = getComputedStyle(document.documentElement);
   const mintHex = css.getPropertyValue('--mint').trim();
@@ -122,7 +144,8 @@
 
   // ---------- map ----------
   const MAP = window.LATAM;
-  const MS = 1.24, MAP_X = 404, MAP_Y = 132;
+  const GL = LAY.glows;
+  const MS = LAY.map.ms, MAP_X = LAY.map.x, MAP_Y = LAY.map.y, DIM = LAY.map.dim;
   const dots = (() => {
     const r = rng(2027);
     return MAP.dots.map(([x, y]) => {
@@ -171,7 +194,7 @@
       const cr = lerp(62, MINT[0], k) + fl * 120, cg = lerp(62, MINT[1], k) + fl * 120, cb = lerp(62, MINT[2], k) + fl * 120;
       let a = (0.9 * ap + 0.1) * lerp(0.75, 1, act);
       // keep the headline area calm
-      if (d.x < 770 && d.y > 520 && d.y < 870) a *= 0.32;
+      if (DIM && d.x < DIM[0] && d.y > DIM[1] && d.y < DIM[2]) a *= 0.32;
       mapC.fillStyle = `rgba(${cr | 0},${cg | 0},${cb | 0},${a.toFixed(3)})`;
       mapC.beginPath(); mapC.arc(d.x, d.y, R * sc * (1 + fl * 0.9), 0, Math.PI * 2); mapC.fill();
       if (fl > 0.05) {
@@ -242,9 +265,9 @@
     return { x, y, r, z };
   };
   const BURSTS = [
-    { t: 1.0, x: 540, y: 540, n: 56, sp: 1100, seed: 1, size: 7 },
-    { t: 7.02, x: 630, y: 690, n: 34, sp: 700, seed: 2, size: 6 },
-    { t: 15.55, x: 540, y: 570, n: 50, sp: 1000, seed: 3, size: 7 },
+    { t: 1.0, x: W / 2, y: H / 2, n: 56, sp: 1100, seed: 1, size: 7 },
+    { t: 7.02, x: LAY.fx.stamp[0], y: LAY.fx.stamp[1], n: 34, sp: 700, seed: 2, size: 6 },
+    { t: 15.55, x: LAY.fx.year[0], y: LAY.fx.year[1], n: 50, sp: 1000, seed: 3, size: 7 },
   ].map((b) => {
     const r = rng(b.seed);
     b.parts = Array.from({ length: b.n }, () => ({
@@ -253,9 +276,9 @@
     return b;
   });
   const RINGS = [
-    { t: 1.0, x: 540, y: 540, r: 700, w: 3 }, { t: 1.06, x: 540, y: 540, r: 480, w: 1.5 },
-    { t: 7.02, x: 630, y: 690, r: 260, w: 2 },
-    { t: 15.55, x: 540, y: 570, r: 640, w: 3 }, { t: 15.6, x: 540, y: 570, r: 420, w: 1.5 },
+    { t: 1.0, x: W / 2, y: H / 2, r: 700, w: 3 }, { t: 1.06, x: W / 2, y: H / 2, r: 480, w: 1.5 },
+    { t: 7.02, x: LAY.fx.stamp[0], y: LAY.fx.stamp[1], r: 260, w: 2 },
+    { t: 15.55, x: LAY.fx.year[0], y: LAY.fx.year[1], r: 640, w: 3 }, { t: 15.6, x: LAY.fx.year[0], y: LAY.fx.year[1], r: 420, w: 1.5 },
   ];
   const drawFx = (t) => {
     fx.clearRect(0, 0, W, H);
@@ -307,13 +330,13 @@
       }
     }
     const glows = [
-      { x: 540, y: 540, a: 0.16 * prog(t, 0.2, 1.0) * (1 - prog(t, 1.8, 2.4)) + 0.35 * bump(t, 1.03, 0.12), r: 620 },
-      { x: 790, y: 520, a: 0.13 * prog(t, 2.9, 3.8) * (1 - prog(t, 4.7, 5.0)), r: 640 },
-      { x: 540, y: 330, a: 0.12 * prog(t, 5.2, 6.0) * (1 - prog(t, 8.2, 8.5)) + 0.18 * bump(t, 6.1, 0.2), r: 560 },
-      { x: 300, y: 520, a: 0.07 * prog(t, 8.6, 9.2) * (1 - prog(t, 11.2, 11.5)), r: 700 },
-      { x: 540, y: 600, a: 0.16 * prog(t, 15.2, 15.6) * (1 - prog(t, 16.8, 17.0)) + 0.25 * bump(t, 15.57, 0.14), r: 620 },
-      { x: 930, y: 830, a: 0.09 * prog(t, 17.4, 18.2), r: 560 },
-    ];
+      { x: W / 2, y: H / 2, a: 0.16 * prog(t, 0.2, 1.0) * (1 - prog(t, 1.8, 2.4)) + 0.35 * bump(t, 1.03, 0.12), r: WIDE ? 760 : 620 },
+      { g: GL.s2, a: 0.13 * prog(t, 2.9, 3.8) * (1 - prog(t, 4.7, 5.0)) },
+      { g: GL.s3, a: 0.12 * prog(t, 5.2, 6.0) * (1 - prog(t, 8.2, 8.5)) + 0.18 * bump(t, 6.1, 0.2) },
+      { g: GL.s4, a: 0.07 * prog(t, 8.6, 9.2) * (1 - prog(t, 11.2, 11.5)) },
+      { g: GL.s6, a: 0.16 * prog(t, 15.2, 15.6) * (1 - prog(t, 16.8, 17.0)) + 0.25 * bump(t, 15.57, 0.14) },
+      { g: GL.s7, a: 0.09 * prog(t, 17.4, 18.2) },
+    ].map((g) => (g.g ? { x: g.g[0], y: g.g[1], r: g.g[2], a: g.a } : g));
     bg.globalCompositeOperation = 'lighter';
     for (const g of glows) {
       if (g.a < 0.002) continue;
@@ -322,9 +345,12 @@
       bg.fillStyle = gr; bg.fillRect(0, 0, W, H);
     }
     bg.globalCompositeOperation = 'source-over';
-    const v = bg.createRadialGradient(540, 540, 360, 540, 540, 820);
+    // elliptical vignette that follows the frame aspect
+    bg.save(); bg.translate(W / 2, H / 2); bg.scale(W / H, 1);
+    const v = bg.createRadialGradient(0, 0, 360, 0, 0, 820);
     v.addColorStop(0, 'rgba(0,0,0,0)'); v.addColorStop(1, 'rgba(0,0,0,0.75)');
-    bg.fillStyle = v; bg.fillRect(0, 0, W, H);
+    bg.fillStyle = v; bg.fillRect(-H / 2 - 1, -H / 2 - 1, H + 2, H + 2);
+    bg.restore();
   };
 
   // ---------- element refs & layout measurement ----------
@@ -336,7 +362,7 @@
     's6', 's6lbl', 's6dayIn', 's6year', 's6fill', 's6head', 's7', 's7card', 's7logo', 'e1', 'e2', 'e3', 's7cta', 's7date', 's7legal', 'wipe', 'flash', 'grain']
     .forEach((id) => { el[id] = $(id); });
 
-  const ZERO_PX = 520, FEE_PX = 96, YEAR_PX = 340;
+  const ZERO_PX = parseFloat(getComputedStyle(el.zeroBase).fontSize), FEE_PX = 96, YEAR_PX = parseFloat(getComputedStyle(el.s6year).fontSize);
   const zeroLast = makeReel(el.zeroBase.querySelector('.strip'), '0', 26, 11);
   makeReel(el.zeroSheen.querySelector('.strip'), '0', 26, 11);
   const feeLast = makeReel(el.feeVal.querySelector('.strip'), '0', 18, 12);
@@ -348,7 +374,6 @@
   });
 
   // Logo override (official SVG) via ?logo=path
-  const params = new URLSearchParams(location.search);
   if (params.get('logo')) {
     document.querySelectorAll('.logo').forEach((n) => { n.innerHTML = `<img src="${params.get('logo')}" alt="KAST" style="height:.74em">`; });
   }
@@ -361,6 +386,8 @@
     el.zeroPh.style.display = 'inline-block'; el.zeroPh.style.lineHeight = '1'; el.zeroPh.style.letterSpacing = '-.055em';
     const ph = el.zeroPh.getBoundingClientRect();
     L.zs1 = ph.height / zb.height; L.zx1 = ph.left; L.zy1 = ph.top;
+    L.win = ZERO_PX * 0.427; // half-height of the scan window around the digits
+    L.barW = el.s6fill.offsetWidth;
   };
 
   const p3len = { c: 2 * Math.PI * 21, k: 36 };
@@ -406,7 +433,7 @@
     const open = E.inOutExpo(prog(t, 0.36, 0.72));
     const sa = E.outExpo(prog(t, 0.04, 0.42));
     const gone = E.inExpo(prog(t, 0.98, 1.22));
-    const topY = lerp(539, 318, open) - gone * 400, botY = lerp(539, 762, open) + gone * 400;
+    const topY = lerp(H / 2 - 1, H / 2 - L.win, open) - gone * 400, botY = lerp(H / 2 - 1, H / 2 + L.win, open) + gone * 400;
     tf(el.scanA, { y: topY, sx: sa, o: 1 - prog(t, 1.12, 1.22) });
     tf(el.scanB, { y: botY, sx: sa, o: (open > 0.01 ? 1 : 0) * (1 - prog(t, 1.12, 1.22)) });
     show(el.scanA, t < 1.25); show(el.scanB, t < 1.25 && t > 0.36);
@@ -471,7 +498,7 @@
 
     // S2 exit: punch through the map
     const ex = E.inExpo(prog(t, 4.6, 5.02));
-    el.grpA.style.transformOrigin = '760px 560px';
+    el.grpA.style.transformOrigin = LAY.exitOrigin;
     el.grpA.style.transform = ex > 0 ? `scale(${(1 + ex * 2.4).toFixed(4)})` : 'none';
     el.grpA.style.opacity = (1 - prog(t, 4.84, 5.02)).toFixed(3);
     el.grpA.style.filter = ex > 0.02 ? `blur(${(ex * 14).toFixed(2)}px)` : 'none';
@@ -486,7 +513,7 @@
     const tap = E.outCubic(prog(t, 5.92, 6.1)) - E.outCubic(prog(t, 6.1, 6.55));
     rx += 24 * tap; z += 90 * tap; y += 26 * tap;
     const up = E.outExpo(prog(t, 6.15, 6.9));
-    y += lerp(0, -134, up); s = lerp(1, 0.74, up);
+    x += LAY.card.upX * up; y += LAY.card.upY * up; s = lerp(1, LAY.card.upS, up);
     return { x, y, z, rx, ry, rz, s };
   };
   const applyCard = (c, o, t, sweepT) => {
@@ -500,7 +527,7 @@
     const on = t > 4.94 && t < 8.55;
     show(el.s3, on);
     if (!on) return;
-    const ex = (tt) => -1350 * E.inExpo(prog(tt, 8.2, 8.52));
+    const ex = (tt) => -LAY.whip * E.inExpo(prog(tt, 8.2, 8.52));
     const exX = ex(t);
     el.s3.style.transform = exX ? `translateX(${exX.toFixed(1)}px)` : 'none';
     blur(el.s3, 'b3', vel(ex, t) * 0.32, 0);
@@ -515,7 +542,7 @@
       const p = prog(t, k, k + 0.85);
       if (p <= 0 || p >= 1) continue;
       s3c.strokeStyle = mint(0.8 * (1 - p) ** 2); s3c.lineWidth = 3;
-      s3c.beginPath(); s3c.arc(540, 451 + 26, 200 + E.outCubic(p) * 420, 0, Math.PI * 2); s3c.stroke();
+      s3c.beginPath(); s3c.arc(LAY.card.cx, LAY.card.cy + 26, 200 + E.outCubic(p) * 420, 0, Math.PI * 2); s3c.stroke();
     }
 
     const pin = E.outExpo(prog(t, 6.25, 6.95));
@@ -539,7 +566,7 @@
     const on = t > 8.25 && t < 11.62;
     show(el.s4, on);
     if (!on) return;
-    const ent = (tt) => 1350 * (1 - E.outExpo(prog(tt, 8.28, 8.78)));
+    const ent = (tt) => LAY.whip * (1 - E.outExpo(prog(tt, 8.28, 8.78)));
     el.s4.style.transform = `translateX(${ent(t).toFixed(1)}px)`;
     blur(el.s4, 'b4', vel(ent, t) * 0.32, 0);
 
@@ -549,7 +576,7 @@
       const w = el[id];
       const inP = E.outExpo(prog(t, enters[i], enters[i] + 0.34));
       const outP = E.outExpo(prog(t, exits[i], exits[i] + 0.34));
-      const y = lerp(205, 0, inP) - 205 * outP;
+      const y = lerp(LAY.s4travel, 0, inP) - LAY.s4travel * outP;
       w.style.transform = `translateY(${y.toFixed(1)}px)`;
       show(w, inP > 0 && outP < 1);
       const k = el['k' + i];
@@ -616,14 +643,14 @@
     el.s6year.style.opacity = prog(t, 15.0, 15.12).toFixed(3);
     const f = E.outCubic(prog(t, 15.3, 16.2));
     el.s6fill.style.transform = `scaleX(${f.toFixed(4)})`;
-    el.s6head.style.left = `${(f * 780).toFixed(1)}px`;
+    el.s6head.style.left = `${(f * L.barW).toFixed(1)}px`;
     el.s6head.style.opacity = prog(t, 15.3, 15.4).toFixed(3);
     document.querySelectorAll('.s6tick').forEach((n) => { n.style.opacity = prog(t, 15.35, 15.6).toFixed(3); });
   };
 
   const sceneS7 = (t) => {
     const w = E.inOutExpo(prog(t, 16.68, 17.32));
-    el.wipe.style.transform = `translateX(${lerp(-2900, 1500, w).toFixed(1)}px) skewX(-14deg)`;
+    el.wipe.style.transform = `translateX(${lerp(-W - 650, W + 400, w).toFixed(1)}px) skewX(-14deg)`;
     show(el.wipe, w > 0 && w < 1);
     const on = t >= 17.0;
     show(el.s7, on);
@@ -637,7 +664,7 @@
     const ce = E.outExpo(prog(t, 17.15, 18.05));
     const lt = t - 17.0;
     applyCard(cards[1], {
-      x: lerp(760, 0, ce), y: lerp(160, 0, ce) + 8 * Math.sin(lt * 1.5), z: 0,
+      x: lerp(LAY.s7card.fromX, 0, ce), y: lerp(160, 0, ce) + 8 * Math.sin(lt * 1.5), z: 0, s: LAY.s7card.s,
       rx: lerp(30, 16, ce) + 3 * Math.sin(lt * 1.2), ry: lerp(-90, -26, ce) + 7 * Math.sin(lt * 0.9), rz: lerp(-30, -16, ce),
     }, t, 17.75);
   };
