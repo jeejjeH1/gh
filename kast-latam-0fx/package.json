@@ -1,0 +1,21 @@
+{
+  "name": "kast-latam-0fx",
+  "version": "1.0.0",
+  "description": "Motion graphic for the KAST 0% FX fees across LATAM announcement",
+  "scripts": {
+    "map": "node scripts/build-map.mjs",
+    "preview": "node scripts/render.mjs --stills 1.2,3.6,7.4,9.6,12.9,15.9,19",
+    "frames": "node scripts/render.mjs",
+    "audio": "python3 scripts/audio.py",
+    "encode": "bash scripts/encode.sh",
+    "build": "npm run frames && npm run audio && npm run encode"
+  },
+  "dependencies": {
+    "@fontsource/geist-mono": "^5.3.0",
+    "@fontsource/inter-tight": "^5.3.0",
+    "d3-geo": "^3.1.1",
+    "topojson-client": "^3.1.0",
+    "world-atlas": "^2.0.2"
+  },
+  "private": true
+}

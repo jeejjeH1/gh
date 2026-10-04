@@ -1,0 +1,291 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<title>KAST — 0% FX fees across LATAM</title>
+<link rel="stylesheet" href="brand.css">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html, body { width: 1080px; height: 1080px; overflow: hidden; background: var(--black); }
+  body { font-family: var(--font-display); color: var(--white); -webkit-font-smoothing: antialiased; }
+
+  #stage { position: absolute; inset: 0; width: 1080px; height: 1080px; overflow: hidden; background: var(--black); }
+  #stage canvas { position: absolute; left: 0; top: 0; }
+  #cam { position: absolute; inset: 0; transform-origin: 540px 540px; }
+  .layer { position: absolute; inset: 0; }
+  .abs { position: absolute; }
+  .mono { font-family: var(--font-mono); font-weight: 500; text-transform: uppercase; letter-spacing: .18em; }
+  .mint { color: var(--mint); }
+  .grey { color: var(--grey); }
+  .mask { overflow: hidden; display: block; padding-bottom: .16em; margin-bottom: -.16em; }
+  .mask > span { display: inline-block; will-change: transform; }
+
+  /* ---------- logo (text fallback; replaced by the official SVG when provided) ---------- */
+  .logo { font-family: var(--font-display); font-weight: 900; letter-spacing: -.035em; line-height: 1; color: var(--white); }
+  .logo img { display: block; height: 1em; width: auto; }
+
+  /* ---------- S1 ---------- */
+  .scan { position: absolute; left: 0; width: 1080px; height: 2px; background: var(--mint);
+          box-shadow: 0 0 18px rgba(var(--mint-rgb), .9), 0 0 60px rgba(var(--mint-rgb), .5); transform-origin: 540px 1px; }
+  #zeroWrap { position: absolute; left: 0; top: 0; transform-origin: 0 0; }
+  .zero { position: absolute; left: 0; top: 0; display: flex; align-items: flex-start; font-weight: 800; font-size: 520px;
+          line-height: 1; letter-spacing: -.055em; white-space: nowrap; }
+  .zero .reel { display: block; height: 1em; overflow: hidden; }
+  .zero .strip { display: flex; flex-direction: column; }
+  .zero .strip span { display: block; height: 1em; text-align: center; }
+  .zero .pct { display: block; }
+  #zeroSheen { color: var(--mint); }
+  #s1chip { left: 540px; top: 214px; transform: translateX(-50%); display: flex; align-items: center; gap: 14px;
+            padding: 12px 22px 12px 18px; border-radius: 999px; border: 1.5px solid rgba(var(--mint-rgb), .45);
+            background: rgba(var(--mint-rgb), .07); font-size: 22px; color: var(--mint); white-space: nowrap; }
+  .dot { width: 12px; height: 12px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 14px var(--mint); }
+  #s1label { left: 0; width: 1080px; top: 838px; text-align: center; font-size: 27px; color: var(--white); letter-spacing: .3em; white-space: pre; }
+  .cursor { display: inline-block; width: .62em; height: 1em; background: var(--mint); vertical-align: -.14em; margin-left: .08em; }
+
+  /* ---------- S2 ---------- */
+  #mapCanvas { position: absolute; left: 0; top: 0; }
+  #s2head { position: absolute; left: 84px; top: 548px; font-weight: 800; font-size: 98px; line-height: 1; letter-spacing: -.045em; }
+  #s2head .ph { color: transparent; }
+  #s2hud { left: 84px; top: 116px; font-size: 19px; line-height: 1.9; color: var(--grey); white-space: pre; }
+  #s2hud b { color: var(--white); font-weight: 500; }
+  #s2hud i { font-style: normal; color: var(--mint); }
+
+  /* ---------- S3 ---------- */
+  #s3 { perspective: 1500px; perspective-origin: 540px 420px; }
+  #cardPos { position: absolute; left: 240px; top: 262px; width: 600px; height: 378px; transform-style: preserve-3d; }
+  .card { position: absolute; inset: 0; border-radius: 30px; backface-visibility: hidden; overflow: hidden; }
+  .card-front { background: #0b0b0b; box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.16); }
+  .card-front .metal { position: absolute; inset: 0; background: var(--grey-gradient); opacity: .26; }
+  .card-front .brush { position: absolute; inset: 0; opacity: .07;
+          background: repeating-linear-gradient(90deg, rgba(255,255,255,.9) 0 1px, transparent 1px 3px, rgba(255,255,255,.4) 3px 4px, transparent 4px 7px); }
+  .card-front .spec { position: absolute; inset: -40%; mix-blend-mode: screen;
+          background: linear-gradient(105deg, transparent 38%, rgba(255,255,255,.07) 44%, rgba(255,255,255,.42) 50%, rgba(255,255,255,.07) 56%, transparent 62%); }
+  .card-front .edge { position: absolute; inset: 0; border-radius: 30px; box-shadow: inset 0 1.5px 0 rgba(255,255,255,.35), inset 0 -1px 0 rgba(255,255,255,.08); }
+  .card .logo { position: absolute; left: 42px; top: 40px; font-size: 52px; }
+  .card .chip { position: absolute; left: 44px; top: 152px; width: 78px; height: 60px; border-radius: 12px;
+          background: linear-gradient(135deg, #5a5a5a, #d4d4d4 45%, #9a9a9a 55%, #4a4a4a); box-shadow: inset 0 0 0 1px rgba(0,0,0,.35); }
+  .card .chip::before, .card .chip::after { content: ""; position: absolute; background: rgba(0,0,0,.28); }
+  .card .chip::before { left: 26px; top: 0; width: 1.5px; height: 60px; box-shadow: 24px 0 0 rgba(0,0,0,.28); }
+  .card .chip::after { left: 0; top: 20px; width: 78px; height: 1.5px; box-shadow: 0 19px 0 rgba(0,0,0,.28); }
+  .card .nfc { position: absolute; right: 44px; top: 44px; width: 44px; height: 44px; }
+  .card .cardtag { position: absolute; left: 44px; bottom: 40px; font-size: 18px; color: rgba(255,255,255,.62); letter-spacing: .22em; }
+  .card .cardtag i { font-style: normal; color: var(--mint); }
+  .card .cardmint { position: absolute; right: 44px; bottom: 42px; width: 14px; height: 14px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 16px var(--mint); }
+  .card-back { background: #070707; transform: rotateY(180deg); box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.12); }
+  .card-back .stripe { position: absolute; left: 0; right: 0; top: 50px; height: 70px; background: #1c1c1c; }
+  .card-back .sig { position: absolute; left: 44px; top: 160px; width: 300px; height: 46px; border-radius: 6px; background: var(--grey-gradient); opacity: .35; }
+  #cardShadow { position: absolute; left: 270px; top: 610px; width: 540px; height: 80px; border-radius: 50%;
+          background: radial-gradient(closest-side, rgba(0,0,0,.95), transparent); }
+
+  #panel { position: absolute; left: 140px; top: 586px; width: 800px; height: 386px; border-radius: 30px;
+           background: linear-gradient(180deg, rgba(26,26,26,.92), rgba(12,12,12,.94));
+           box-shadow: inset 0 0 0 1.5px rgba(255,255,255,.09), 0 40px 80px rgba(0,0,0,.6); }
+  #panel .row { position: absolute; left: 44px; right: 44px; display: flex; align-items: center; justify-content: space-between; }
+  #panel .hair { position: absolute; left: 44px; right: 44px; height: 1.5px; background: rgba(255,255,255,.1); transform-origin: 0 0; }
+  #pRow1 { top: 34px; height: 60px; }
+  #pRow1 .mono { font-size: 20px; color: var(--grey); }
+  .pill { font-family: var(--font-mono); font-size: 18px; letter-spacing: .16em; padding: 10px 18px; border-radius: 999px;
+          border: 1.5px solid rgba(255,255,255,.22); color: var(--white); text-transform: uppercase; }
+  #pRow2 { top: 120px; height: 130px; }
+  #pRow2 .lbl { font-size: 50px; font-weight: 700; letter-spacing: -.03em; }
+  #feeVal { font-size: 96px; font-weight: 800; letter-spacing: -.05em; color: var(--mint); line-height: 1; display: flex; }
+  #feeVal .reel { height: 1em; overflow: hidden; display: block; }
+  #feeVal .strip { display: flex; flex-direction: column; }
+  #feeVal .strip span { height: 1em; display: block; text-align: center; }
+  #stamp { position: absolute; left: 392px; top: 154px; padding: 12px 20px 12px 18px; border-radius: 10px; background: var(--mint); color: #000;
+           font-family: var(--font-mono); font-weight: 600; font-size: 25px; letter-spacing: .2em; display: flex; align-items: center; gap: 12px; }
+  #panel #pRow3 { top: 282px; height: 70px; justify-content: flex-start; gap: 20px; }
+  #pRow3 .txt { font-size: 34px; font-weight: 600; letter-spacing: -.02em; color: var(--white); }
+  #pRow3 svg { width: 48px; height: 48px; flex: none; }
+
+  /* ---------- S4 ---------- */
+  #s4a { left: 96px; top: 410px; font-size: 118px; font-weight: 700; letter-spacing: -.045em; line-height: 1; }
+  #s4slot { position: absolute; left: 96px; top: 540px; width: 960px; height: 200px; overflow: hidden; }
+  .word { position: absolute; left: 0; top: 0; font-size: 176px; font-weight: 900; letter-spacing: -.05em; line-height: 1.08; white-space: nowrap; }
+  .strike { position: absolute; left: -10px; right: -10px; top: 104px; height: 16px; background: var(--mint); transform-origin: 0 50%;
+            box-shadow: 0 0 24px rgba(var(--mint-rgb), .6); }
+  #s4count { left: 96px; top: 340px; font-size: 22px; color: var(--grey); }
+  #s4count i { font-style: normal; color: var(--mint); }
+  #s4fin { left: 96px; top: 300px; font-size: 122px; font-weight: 800; letter-spacing: -.05em; line-height: 1.02; }
+  #s4finTag { left: 96px; top: 740px; font-size: 22px; color: var(--grey); display: flex; align-items: center; gap: 16px; }
+  #s4check { position: absolute; left: 864px; top: 304px; width: 120px; height: 120px; }
+
+  /* ---------- S5 ---------- */
+  #s5head { left: 96px; top: 150px; font-size: 24px; color: var(--white); display: flex; align-items: center; gap: 16px; white-space: pre; }
+  .sq { width: 14px; height: 14px; background: var(--mint); box-shadow: 0 0 14px rgba(var(--mint-rgb), .8); }
+  .frow { position: absolute; left: 96px; width: 888px; height: 214px; }
+  .frow .hair { position: absolute; left: 0; top: 0; width: 888px; height: 1.5px; background: rgba(255,255,255,.16); transform-origin: 0 0; }
+  .frow .num { position: absolute; left: 0; top: 46px; font-size: 24px; color: var(--mint); }
+  .frow .txt { position: absolute; left: 112px; top: 36px; width: 640px; font-size: 50px; font-weight: 700; letter-spacing: -.035em; line-height: 1.08; color: var(--grey); }
+  .frow .txt b { color: var(--white); font-weight: 700; }
+  .frow .txt i { font-style: normal; color: var(--mint); }
+  .frow svg { position: absolute; right: 0; top: 40px; width: 64px; height: 64px; }
+  #s5bottom { left: 96px; top: 938px; width: 888px; height: 1.5px; background: rgba(255,255,255,.16); transform-origin: 0 0; }
+
+  /* ---------- S6 ---------- */
+  #s6lbl { left: 0; width: 1080px; top: 196px; text-align: center; font-size: 26px; color: var(--grey); letter-spacing: .32em; }
+  #s6day { left: 0; width: 1080px; top: 258px; text-align: center; font-size: 132px; font-weight: 800; letter-spacing: -.045em; line-height: 1.05; }
+  #s6year { position: absolute; left: 0; width: 1080px; top: 400px; display: flex; justify-content: center; font-size: 340px; font-weight: 900;
+            letter-spacing: -.06em; line-height: 1; color: var(--mint); }
+  #s6year .reel { display: block; height: 1em; overflow: hidden; }
+  #s6year .strip { display: flex; flex-direction: column; }
+  #s6year .strip span { display: block; height: 1em; text-align: center; }
+  #s6bar { position: absolute; left: 150px; top: 862px; width: 780px; height: 3px; background: rgba(255,255,255,.14); }
+  #s6fill { position: absolute; left: 0; top: 0; height: 3px; width: 780px; background: var(--mint); transform-origin: 0 0; box-shadow: 0 0 16px rgba(var(--mint-rgb), .8); }
+  #s6head { position: absolute; top: -9px; width: 20px; height: 20px; margin-left: -10px; border-radius: 50%; background: var(--mint); box-shadow: 0 0 22px var(--mint), 0 0 60px rgba(var(--mint-rgb), .6); }
+  .s6tick { position: absolute; top: 28px; font-size: 19px; color: var(--grey); white-space: nowrap; }
+
+  /* ---------- S7 ---------- */
+  #wipe { position: absolute; left: -400px; top: -200px; width: 2600px; height: 1480px; background: var(--mint); transform-origin: 0 0; }
+  #s7logo { left: 96px; top: 104px; font-size: 64px; }
+  #s7head { left: 96px; top: 300px; font-size: 100px; font-weight: 800; letter-spacing: -.05em; line-height: 1.0; }
+  #s7cta { left: 96px; top: 656px; display: flex; align-items: center; gap: 14px; padding: 16px 26px 16px 22px; border-radius: 999px;
+           border: 1.5px solid rgba(var(--mint-rgb), .5); font-size: 21px; color: var(--white); white-space: nowrap; }
+  #s7cta i { font-style: normal; color: var(--mint); }
+  #s7legal { left: 96px; top: 980px; font-size: 18px; color: var(--grey); letter-spacing: .1em; text-transform: none; white-space: nowrap; }
+  #s7date { left: 96px; top: 944px; font-size: 18px; color: var(--white); letter-spacing: .1em; white-space: nowrap; }
+  #s7card { position: absolute; left: 640px; top: 640px; width: 600px; height: 378px; transform-style: preserve-3d; }
+  #s7persp { perspective: 1400px; perspective-origin: 900px 760px; }
+
+  #flash { position: absolute; inset: 0; background: var(--mint); opacity: 0; mix-blend-mode: screen; }
+  #grain { mix-blend-mode: screen; }
+</style>
+</head>
+<body>
+<svg width="0" height="0" style="position:absolute" aria-hidden="true"><defs id="filters"></defs></svg>
+<div id="stage">
+  <canvas id="bg" width="1080" height="1080"></canvas>
+  <div id="cam">
+
+    <!-- ===== Group A: S1 + S2 (share the 0%) ===== -->
+    <div id="grpA" class="layer">
+      <canvas id="mapCanvas" width="1080" height="1080"></canvas>
+      <div id="s2hud" class="abs mono"></div>
+      <div id="s2head">
+        <span class="mask line"><span id="h1"><span class="ph" id="zeroPh">0%</span> FX fees</span></span>
+        <span class="mask line"><span id="h2">are now live</span></span>
+        <span class="mask line"><span id="h3">across <span class="mint">LATAM</span></span></span>
+      </div>
+      <div id="s1" class="layer">
+        <div id="scanA" class="scan"></div>
+        <div id="scanB" class="scan"></div>
+        <div id="s1chip" class="abs mono"><span class="dot" id="s1dot"></span><span>Now live</span></div>
+        <div id="s1label" class="abs mono"></div>
+      </div>
+      <div id="zeroWrap">
+        <div class="zero" id="zeroBase"><span class="reel"><span class="strip"></span></span><span class="pct">%</span></div>
+        <div class="zero" id="zeroSheen"><span class="reel"><span class="strip"></span></span><span class="pct">%</span></div>
+      </div>
+    </div>
+
+    <!-- ===== S3: card + transaction ===== -->
+    <div id="s3" class="layer">
+      <canvas id="s3canvas" width="1080" height="1080"></canvas>
+      <div id="cardShadow"></div>
+      <div id="cardPos">
+        <div class="card card-front">
+          <div class="metal"></div><div class="brush"></div><div class="spec"></div><div class="edge"></div>
+          <div class="logo">KAST</div>
+          <svg class="nfc" viewBox="0 0 44 44" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round">
+            <path d="M14 13c3 2.5 4.6 5.6 4.6 9s-1.6 6.5-4.6 9"/><path d="M21.5 8.5c4.4 3.6 6.8 8.2 6.8 13.5s-2.4 9.9-6.8 13.5"/><path d="M29 4c5.8 4.8 9 11 9 18s-3.2 13.2-9 18"/>
+          </svg>
+          <div class="chip"></div>
+          <div class="cardtag mono">LATAM · <i>0% FX</i></div>
+          <div class="cardmint"></div>
+        </div>
+        <div class="card card-back"><div class="stripe"></div><div class="sig"></div></div>
+      </div>
+      <div id="panel">
+        <div class="row" id="pRow1"><span class="mono">Card purchase</span><span class="pill">Local currency</span></div>
+        <div class="hair" id="pHair1" style="top:110px"></div>
+        <div class="row" id="pRow2"><span class="lbl">KAST FX fee</span><span id="feeVal"><span class="reel"><span class="strip"></span></span><span>%</span></span></div>
+        <div id="stamp"><svg width="22" height="22" viewBox="0 0 22 22" fill="none" stroke="#000" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><path d="M4 11.5l4.5 4.5L18 6.5"/></svg>WAIVED</div>
+        <div class="hair" id="pHair2" style="top:262px"></div>
+        <div class="row" id="pRow3">
+          <svg viewBox="0 0 48 48" fill="none"><circle id="p3circ" cx="24" cy="24" r="21" stroke="var(--mint)" stroke-width="3"/><path id="p3tick" d="M14 24.5l7 7L34.5 17" stroke="var(--mint)" stroke-width="3.6" stroke-linecap="round" stroke-linejoin="round"/></svg>
+          <span class="mask"><span id="p3txt" class="txt">Waived automatically at purchase</span></span>
+        </div>
+      </div>
+    </div>
+
+    <!-- ===== S4: nothing to activate / claim / wait for ===== -->
+    <div id="s4" class="layer">
+      <div id="s4count" class="abs mono"></div>
+      <div id="s4a" class="abs"><span class="mask"><span id="s4aIn">Nothing to</span></span></div>
+      <div id="s4slot">
+        <div class="word" id="w0">activate.<div class="strike" id="k0"></div></div>
+        <div class="word" id="w1">claim.<div class="strike" id="k1"></div></div>
+        <div class="word" id="w2">wait for.<div class="strike" id="k2"></div></div>
+      </div>
+      <div id="s4fin" class="abs">
+        <span class="mask"><span id="f1">Waived</span></span>
+        <span class="mask"><span id="f2" class="mint">automatically</span></span>
+        <span class="mask"><span id="f3">at purchase.</span></span>
+      </div>
+      <svg id="s4check" viewBox="0 0 120 120" fill="none"><circle id="s4circ" cx="60" cy="60" r="54" stroke="var(--mint)" stroke-width="5"/><path id="s4tick" d="M35 61l17 17 34-35" stroke="var(--mint)" stroke-width="8" stroke-linecap="round" stroke-linejoin="round"/></svg>
+      <div id="s4finTag" class="abs mono"><span class="sq"></span><span>Nothing to activate, claim or wait for</span></div>
+    </div>
+
+    <!-- ===== S5: what you need to know ===== -->
+    <div id="s5" class="layer">
+      <div id="s5head" class="abs mono"><span class="sq"></span><span id="s5headTxt"></span></div>
+      <div class="frow" id="r0" style="top:226px"><div class="hair"></div><div class="num mono">01</div>
+        <div class="txt"><span class="mask"><span><b>Eligible card purchases</b> in</span></span><span class="mask"><span>supported LATAM currencies</span></span></div>
+        <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="29" stroke="var(--mint)" stroke-width="3"/><path d="M19 33l9 9 18-19" stroke="var(--mint)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="frow" id="r1" style="top:463px"><div class="hair"></div><div class="num mono">02</div>
+        <div class="txt"><span class="mask"><span>KAST FX fee <b>waived</b></span></span><span class="mask"><span><b>automatically</b> on each</span></span><span class="mask"><span>eligible purchase</span></span></div>
+        <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="29" stroke="var(--mint)" stroke-width="3"/><path d="M19 33l9 9 18-19" stroke="var(--mint)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div class="frow" id="r2" style="top:754px"><div class="hair"></div><div class="num mono">03</div>
+        <div class="txt"><span class="mask"><span>Available through</span></span><span class="mask"><span><i>31 December 2027</i></span></span></div>
+        <svg viewBox="0 0 64 64" fill="none"><circle cx="32" cy="32" r="29" stroke="var(--mint)" stroke-width="3"/><path d="M19 33l9 9 18-19" stroke="var(--mint)" stroke-width="4.5" stroke-linecap="round" stroke-linejoin="round"/></svg></div>
+      <div id="s5bottom" class="abs"></div>
+    </div>
+
+    <!-- ===== S6: through 31 Dec 2027 ===== -->
+    <div id="s6" class="layer">
+      <div id="s6lbl" class="abs mono">Available through</div>
+      <div id="s6day" class="abs"><span class="mask"><span id="s6dayIn">31 December</span></span></div>
+      <div id="s6year"></div>
+      <div id="s6bar"><div id="s6fill"></div><div id="s6head"></div>
+        <div class="s6tick mono" style="left:0">Now · live</div>
+        <div class="s6tick mono" style="right:0">31.12.2027</div></div>
+    </div>
+
+    <!-- ===== S7: end card ===== -->
+    <div id="s7" class="layer">
+      <div id="s7persp" class="layer">
+        <div id="s7card">
+          <div class="card card-front">
+            <div class="metal"></div><div class="brush"></div><div class="spec"></div><div class="edge"></div>
+            <div class="logo">KAST</div>
+            <svg class="nfc" viewBox="0 0 44 44" fill="none" stroke="rgba(255,255,255,.7)" stroke-width="3" stroke-linecap="round">
+              <path d="M14 13c3 2.5 4.6 5.6 4.6 9s-1.6 6.5-4.6 9"/><path d="M21.5 8.5c4.4 3.6 6.8 8.2 6.8 13.5s-2.4 9.9-6.8 13.5"/><path d="M29 4c5.8 4.8 9 11 9 18s-3.2 13.2-9 18"/>
+            </svg>
+            <div class="chip"></div>
+            <div class="cardtag mono">LATAM · <i>0% FX</i></div>
+            <div class="cardmint"></div>
+          </div>
+          <div class="card card-back"><div class="stripe"></div><div class="sig"></div></div>
+        </div>
+      </div>
+      <div id="s7logo" class="abs logo">KAST</div>
+      <div id="s7head" class="abs">
+        <span class="mask line"><span id="e1">Pay in local</span></span>
+        <span class="mask line"><span id="e2">currency.</span></span>
+        <span class="mask line"><span id="e3" class="mint">No KAST FX fee.</span></span>
+      </div>
+      <div id="s7cta" class="abs mono"><span class="dot"></span><span>Full details &amp; T&amp;Cs <i>→</i> kast.xyz</span></div>
+      <div id="s7date" class="abs mono">0% KAST FX fee · through 31 December 2027</div>
+      <div id="s7legal" class="abs mono">Eligibility and exclusions apply. Terms apply.</div>
+    </div>
+
+    <canvas id="fx" width="1080" height="1080"></canvas>
+  </div>
+  <div id="wipe"></div>
+  <div id="flash"></div>
+  <canvas id="grain" width="1080" height="1080"></canvas>
+</div>
+<script src="latam-dots.js"></script>
+<script src="main.js"></script>
+</body>
+</html>

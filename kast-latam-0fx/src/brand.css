@@ -1,0 +1,28 @@
+/*
+  KAST brand tokens.
+  Palette names come from the KAST media kit (Black, White, Grey, Grey gradient, Mint).
+  kast.xyz was not reachable from the render environment, so the hex values below are
+  close approximations — paste the exact values from https://www.kast.xyz/en/media-kit
+  here and re-run `npm run build`.
+*/
+:root {
+  --black: #000000;
+  --white: #ffffff;
+  --grey: #8c8c8c;
+  --grey-dim: #3a3a3a;
+  --grey-gradient: linear-gradient(135deg, #2a2a2a 0%, #8f8f8f 46%, #d6d6d6 54%, #3c3c3c 100%);
+  --mint: #a3f7cf;
+  --mint-rgb: 163, 247, 207;
+
+  --font-display: "Inter Tight", "Helvetica Neue", Arial, sans-serif;
+  --font-mono: "Geist Mono", "DejaVu Sans Mono", monospace;
+}
+
+@font-face { font-family: "Inter Tight"; font-weight: 500; src: url(fonts/inter-tight-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 600; src: url(fonts/inter-tight-latin-600-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 700; src: url(fonts/inter-tight-latin-700-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 800; src: url(fonts/inter-tight-latin-800-normal.woff2) format("woff2"); }
+@font-face { font-family: "Inter Tight"; font-weight: 900; src: url(fonts/inter-tight-latin-900-normal.woff2) format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-weight: 400; src: url(fonts/geist-mono-latin-400-normal.woff2) format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-weight: 500; src: url(fonts/geist-mono-latin-500-normal.woff2) format("woff2"); }
+@font-face { font-family: "Geist Mono"; font-weight: 600; src: url(fonts/geist-mono-latin-600-normal.woff2) format("woff2"); }
